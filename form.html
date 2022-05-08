@@ -18,19 +18,24 @@
   </head>
 
   <body>
-
-    <div class="container theme-showcase" role="main">
-        <div class="jumbotron">
-                <h2>UTM-Builder For Marketo</h2>
-        </div>
+  <header>
+    <div class="jumbotron">
+      <div class="container">
+        <h1 class="display-5">UTM-Builder For Marketo</h1>
+      </div>
+    </div>
+  </header>
+    <div class="container" role="main">
         <div class="row">
           <div class="col-lg-12">
-            <div class="well bs-component">
-              <form class="form-horizontal", method="POST" >
+            <!--div class="well bs-component"-->
+              <form action="" method="POST" >
                 {{ form.csrf_token }}
                 <fieldset>
                   <legend>Include the token values from Marketo</legend>
                   {{ render_field(form.domain, placeholder=form.domain.label.text) }}
+                  <div name = "selects" ></div>
+                    {{render_field(form.selects)}}                  
                   {{ render_field(form.source, placeholder=form.source.label.text) }}
                   {{ render_field(form.medium, placeholder=form.medium.label.text) }}
                   {{ render_field(form.campaign, placeholder=form.campaign.label.text) }}
@@ -38,19 +43,18 @@
                   {{ render_field(form.term, placeholder=form.term.label.text)}}                   
                   <div class="form-group">
                     <div class="col-lg-10 col-lg-offset-2">
-                      <button type="reset" class="btn btn-default">Cancel</button>
-                      <button type="submit" class="btn btn-primary">Generate URL</button>
+                      <input class="btn btn-primary" type="submit" value="Marketo" name= "submit">
+                      <input class="btn btn-primary" type="submit" value="UTM_Values" name= "submit">                         
                     </div>
-                  </div>
+                  </div>                  
                 </fieldset>
                   <div class="mb-3">
                     <label for="exampleFormControlTextarea1" class="form-label">Generated URL:</label>
                     <textarea class="form-control" rows="3"> {{ utm_ref }}</textarea>
                   </div>
               </form>
-            </div>
+            <!--/div-->
           </div>
-
     </div> <!-- /container -->
   </body>
 </html>
