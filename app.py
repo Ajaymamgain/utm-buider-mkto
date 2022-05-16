@@ -1,4 +1,5 @@
 from flask import Flask, render_template, request
+from flask import *
 from flask_wtf import FlaskForm
 from datetime import datetime
 from marketorestpython.client import MarketoClient
@@ -19,7 +20,8 @@ bootstrap = Bootstrap(app)
 app.config['SECRET_KEY'] = 'mysecretkey'
 munchkin_id = os.environ["munchkin_id"]            
 client_id =   os.environ["client_id"]              
-client_secret = os.environ["client_secret"]        
+client_secret = os.environ["client_secret"] 
+
 api_limit = None
 max_retry_time = None
 mc = MarketoClient(munchkin_id, client_id, client_secret,
@@ -27,27 +29,29 @@ mc = MarketoClient(munchkin_id, client_id, client_secret,
 
 class InfoForm(FlaskForm):
      domain = StringField('Domain', validators=[InputRequired()])
-     source = StringField('Source', )
-     medium = StringField('Medium', )
+     source = SelectField('source', choices=[
+                           ('email', 'email'), ('linkedin', 'linkedin'), ('twitter', 'twitter'),('facebook', 'facebook')])
+     
+     medium = SelectField('medium', choices=[
+                           ('email', 'email'), ('paidsocial', 'paidsocial'), ('organicsocial', 'organicsocial'),('referral', 'referral')])
+     
      campaign = StringField('Campaign')
      content = StringField('Content')
      term = StringField('Term')
      utm_ref = StringField('UTM_link')
      submit2 = SubmitField('Marketo')
      submit = SubmitField('utm')
+     audience = SelectField('audience', choices=[
+                           ('tm', 'tm'), ('tr', 'tr'), ('ta', 'ta'),('booker', 'booker'),('dm', 'dm')])
+     region = SelectField('region', choices=[
+                           ('emea', 'emea'), ('apac', 'apac'), ('amer', 'amer'),('global', 'global')])
      selects = SelectField('Type', choices=[
                            ('paid', 'paid'), ('organic', 'organic'), ('custom', 'custom')])
-
 
 @app.route("/utm", methods=('GET', 'POST'))
 def form():
     form = InfoForm()
-
-    def marketo():
-        for key, value in utm.items():
-            lp = mc.execute(method='create_token', id=resp['id'], folderType="Program", name=key, value=value, type="text")
-            print(lp)
-    
+    year = datetime.today().year
 
     if form.validate_on_submit():
         if request.form["submit"] == "Marketo":
@@ -55,6 +59,7 @@ def form():
                 form.source.data = "google"
                 form.content.data = "digital"
                 form.medium.data = "cpc"
+                form.campaign.data = str(year) +"_"+ form.region.data +"_" + form.audience.data +"_"+form.source.data+"_"+form.medium.data
             elif request.form["selects"] == 'organic':
                 form.source.data = "google"
                 form.content.data = "blog"
@@ -65,6 +70,7 @@ def form():
                 form.medium.data = form.content.data
 
             utm_key = ['utm_source', 'utm_medium','utm_campaign','utm_content','utm_term']
+
             utm_values = []
             utm_values.append(form.source.data)
             utm_values.append(form.medium.data)
@@ -72,14 +78,41 @@ def form():
             utm_values.append(form.content.data)
             utm_values.append(form.term.data)
             utm = dict(zip(utm_key, utm_values))
+    
         
             utm_ref = 'http://'+form.domain.data + '/?' + 'utm_source='+form.source.data + '&utm_campaign=' + \
             form.campaign.data + '&utm_medium='+form.medium.data + \
                 '&utm_content=' + form.content.data + '&utm_term='+form.term.data
+            campaign_name = form.campaign.data
+
+            try:
+                campaign_id = mc.execute(method='get_program_by_name', name= campaign_name)
+                json_str = json.dumps(campaign_id)
+                resp = json.loads(json_str)[0]
+                id =  resp['id']        
+            except KeyError:
+                campaign_id = False
+                id = ""
+
             
-            campaign_id = mc.execute(method='get_program_by_name', name= form.campaign.data)
-            json_str = json.dumps(campaign_id)
-            resp = json.loads(json_str)[0]
+            print(id)
+            
+            def marketo():
+                if id != "":
+                    for key, value in utm.items():
+                        if value != "":
+                            try:
+                                lp = mc.execute(method='create_token', id=id, folderType="Program", name=key, value=value, type="text")
+                                print(lp)
+                            except KeyError:
+                                lp = False
+                        else:
+                            print("no values to add")        
+                else:
+                    flash("No Campaign Found in Marketo with the Campaign Name")
+
+
+            
             try:
                 s3 = boto3.client('s3')
                 bucket_name =  os.environ["BUCKET"]
@@ -89,7 +122,9 @@ def form():
                 filename = str(id) + ".json"
                 print(filename)
                 data = {
-                        'id': id,'datetime': str(date), 'utm_ref': utm_ref,'utm_values':utm_values
+                        'id': id,'datetime': str(date), 'utm_ref': utm_ref,'utm_source':form.source.data,
+                        'utm_medium':form.medium.data,'utm_campaign':form.campaign.data,'utm_content':form.content.data,
+                        'utm_term':form.term.data
                     }
                     
                 body = json.dumps(data, sort_keys=True, indent=4)
@@ -104,9 +139,8 @@ def form():
 
         elif request.form["submit"] == "UTM_Values":
             if request.form["selects"] == 'paid':
-                form.source.data = "google"
-                form.content.data = "digital"
-                form.medium.data = "cpc"
+                flash("You have Submitted Paid")
+                form.campaign.data = str(year) +"_"+ form.region.data +"_" + form.audience.data +"_"+form.source.data+"_"+form.medium.data
             elif request.form["selects"] == 'organic':
                 form.source.data = "google"
                 form.content.data = "blog"
@@ -119,4 +153,4 @@ def form():
     return render_template('form.html',  form=form)
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run()
