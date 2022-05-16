@@ -13,8 +13,9 @@
     <!-- Bootstrap core CSS -->
     <!--link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" rel="stylesheet"-->
     <link href="{{ url_for('static', filename='bootstrap.min.css') }}" rel="stylesheet">
+    <!--link href="{{ url_for('static', filename='theme.css') }}" rel="stylesheet"-->
+    <!--link href="{{ url_for('static', filename='style.css') }}" rel="stylesheet"-->
     
-    <link href="{{ url_for('static', filename='style.css') }}" rel="stylesheet">
   </head>
   <body>
   <header>
@@ -27,6 +28,11 @@
   <main>
     <div class="container" role="main">
         <div class="row">
+          {% for mess in get_flashed_messages() %}
+          <div class="alert alert-info" role="alert">
+            <strong>{{mess}}</strong>
+          </div>
+          {% endfor %}
           <div class="col-sm-12 col-lg-6">
             <!--div class="well bs-component"-->
               <form action="" method="POST" >
@@ -34,7 +40,11 @@
                 <fieldset>
                   {{ render_field(form.domain, placeholder=form.domain.label.text) }}
                   <div name = "selects" ></div>
-                    {{render_field(form.selects)}}                  
+                    {{render_field(form.selects)}}
+                  <div name = "region" ></div>
+                    {{render_field(form.region)}}
+                  <div name = "audience" ></div>
+                    {{render_field(form.audience)}}
                   {{ render_field(form.source, placeholder=form.source.label.text) }}
                   {{ render_field(form.medium, placeholder=form.medium.label.text) }}
                   {{ render_field(form.campaign, placeholder=form.campaign.label.text) }}
@@ -77,7 +87,8 @@
               </tr>
               <tr>
                 <td>Medium</td>
-                <td>Mandatory</td>
+                <td>organicsocial
+                </td>
                 <td>The way in which the URL is being served</td>
               </tr>
               <tr>
