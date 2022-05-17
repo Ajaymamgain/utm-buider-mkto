@@ -59,15 +59,21 @@ def form():
                 form.source.data = "google"
                 form.content.data = "digital"
                 form.medium.data = "cpc"
+                form.term.data = "term"
                 form.campaign.data = str(year) +"_"+ form.region.data +"_" + form.audience.data +"_"+form.source.data+"_"+form.medium.data
             elif request.form["selects"] == 'organic':
                 form.source.data = "google"
                 form.content.data = "blog"
                 form.medium.data = "organic"
+                form.term.data = "Organic"
             elif request.form["selects"] == 'custom':
                 form.source.data = form.source.data
                 form.content.data = form.content.data
                 form.medium.data = form.content.data
+                if form.term.data !="":
+                    form.term.data =  form.term.data
+                else:
+                    form.term.data = "None"
 
             utm_key = ['utm_source', 'utm_medium','utm_campaign','utm_content','utm_term']
 
